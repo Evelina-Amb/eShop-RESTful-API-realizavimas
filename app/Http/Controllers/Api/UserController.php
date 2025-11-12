@@ -7,20 +7,21 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\UserResource;
 
-class UserController extends Controller
+class UserController extends BaseController
 {
     // GET /api/users
     public function index()
     {
         $users = User::with('adresas.miestas.salis')->get();
-        return UserResource::collection($users);
+        return $this->sendResponse(UserResource::collection($users), 'Vartotojai sėkmingai gauti.');
     }
 
     // GET /api/users/{id}
     public function show($id)
-    {
-        $user = User::with('adresas.miestas.salis')->findOrFail($id);
-        return new UserResource($user);
+     {
+        $user = User::with('adresas.miestas.salis')->find($id);
+        if (!$user) return $this->sendError('Vartotojas nerastas', 404);
+        return $this->sendResponse(new UserResource($user), 'Vartotojas rastas.');
     }
 
     // POST /api/users
@@ -39,7 +40,7 @@ class UserController extends Controller
 $validated['slaptazodis'] = Hash::make($validated['slaptazodis']);
 
 $user = User::create($validated);
-        return new UserResource($user);
+        return $this->sendResponse(new UserResource($user), 'Vartotojas sukurtas.', 201);
         
 }
 
@@ -63,7 +64,7 @@ $user = User::create($validated);
         }
 
         $user->update($data);
-        return new UserResource($user);
+       return $this->sendResponse(new UserResource($user), 'Vartotojas atnaujintas.');
     }
 
     // DELETE /api/users/{id}
@@ -71,6 +72,6 @@ $user = User::create($validated);
     {
         $user = User::findOrFail($id);
         $user->delete();
-       return response()->json(['message' => 'User ištrintas sėkmingai']);
+        return $this->sendResponse(null, 'Vartotojas ištrintas.');
     }
 }

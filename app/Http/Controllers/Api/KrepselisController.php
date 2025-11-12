@@ -2,25 +2,26 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Krepselis;
+use Illuminate\Http\Request;
 use App\Http\Resources\KrepselisResource;
 
-class KrepselisController extends Controller
+class KrepselisController extends BaseController
 {
     public function index()
     {
-        return KrepselisResource::collection(
-            Krepselis::with(['user', 'skelbimas'])->get()
+        return $this->sendResponse(
+            KrepselisResource::collection(Krepselis::with(['user', 'skelbimas'])->get()),
+            'Krepšelio turinys sėkmingai gautas.'
         );
     }
 
     public function show($id)
     {
-        return new KrepselisResource(
-            Krepselis::with(['user', 'skelbimas'])->findOrFail($id)
-        );
+        $item = Krepselis::with(['user', 'skelbimas'])->find($id);
+        if (!$item) return $this->sendError('Krepšelio įrašas nerastas', 404);
+
+        return $this->sendResponse(new KrepselisResource($item), 'Krepšelio įrašas rastas.');
     }
 
     public function store(Request $request)
@@ -30,19 +31,26 @@ class KrepselisController extends Controller
             'skelbimas_id' => 'required|exists:skelbimai,id',
             'kiekis' => 'required|integer|min:1'
         ]);
-        return new KrepselisResource(Krepselis::create($data));
+
+        $item = Krepselis::create($data);
+        return $this->sendResponse(new KrepselisResource($item), 'Pridėta į krepšelį.', 201);
     }
 
     public function update(Request $request, $id)
     {
-        $item = Krepselis::findOrFail($id);
+        $item = Krepselis::find($id);
+        if (!$item) return $this->sendError('Krepšelio įrašas nerastas', 404);
+
         $item->update($request->validate(['kiekis' => 'required|integer|min:1']));
-        return new KrepselisResource($item);
+        return $this->sendResponse(new KrepselisResource($item), 'Krepšelio įrašas atnaujintas.');
     }
 
     public function destroy($id)
     {
-        Krepselis::findOrFail($id)->delete();
-        return response()->json(['message' => 'Pašalinta iš krepšelio']);
+        $item = Krepselis::find($id);
+        if (!$item) return $this->sendError('Krepšelio įrašas nerastas', 404);
+
+        $item->delete();
+        return $this->sendResponse(null, 'Prekė pašalinta iš krepšelio.');
     }
 }

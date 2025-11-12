@@ -7,29 +7,40 @@ use Illuminate\Http\Request;
 use App\Models\Salis;
 use App\Http\Resources\SalisResource;
 
-class SalisController extends Controller
+class SalisController extends BaseController
 {
-    public function index() { return SalisResource::collection(Salis::all()); }
+    public function index()
+    {
+        return $this->sendResponse(SalisResource::collection(Salis::all()), 'Šalys sėkmingai gautos.');
+    }
 
-    public function show($id) { return new SalisResource(Salis::findOrFail($id)); }
+    public function show($id)
+    {
+        $salis = Salis::find($id);
+        if (!$salis) return $this->sendError('Šalis nerasta', 404);
+        return $this->sendResponse(new SalisResource($salis), 'Šalis sėkmingai rasta.');
+    }
 
     public function store(Request $request)
     {
         $data = $request->validate(['pavadinimas' => 'required|string|max:100']);
         $salis = Salis::create($data);
-         return new SalisResource($salis);
+        return $this->sendResponse(new SalisResource($salis), 'Šalis sukurta sėkmingai.', 201);
     }
 
     public function update(Request $request, $id)
     {
-        $salis = Salis::findOrFail($id);
+        $salis = Salis::find($id);
+        if (!$salis) return $this->sendError('Šalis nerasta', 404);
         $salis->update($request->validate(['pavadinimas' => 'required|string|max:100']));
-       return new SalisResource($salis);
+        return $this->sendResponse(new SalisResource($salis), 'Šalis atnaujinta.');
     }
 
     public function destroy($id)
     {
-        Salis::findOrFail($id)->delete();
-        return response()->json(['message' => 'Salis deleted']);
+        $salis = Salis::find($id);
+        if (!$salis) return $this->sendError('Šalis nerasta', 404);
+        $salis->delete();
+        return $this->sendResponse(null, 'Šalis ištrinta.');
     }
 }
