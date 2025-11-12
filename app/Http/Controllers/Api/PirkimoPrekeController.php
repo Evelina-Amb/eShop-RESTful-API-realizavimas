@@ -3,59 +3,47 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\PirkimoPreke;
-use Illuminate\Http\Request;
 use App\Http\Resources\PirkimoPrekeResource;
+use App\Http\Requests\StorePirkimoPrekeRequest;
+use App\Http\Requests\UpdatePirkimoPrekeRequest;
 
 class PirkimoPrekeController extends BaseController
 {
     public function index()
     {
-        return $this->sendResponse(
-            PirkimoPrekeResource::collection(PirkimoPreke::with(['pirkimas', 'skelbimas'])->get()),
-            'Pirkimo prekės sėkmingai gautos.'
-        );
+        $prekes = PirkimoPreke::with(['pirkimas', 'skelbimas'])->get();
+        return $this->sendResponse(PirkimoPrekeResource::collection($prekes), 'Pirkimo prekės gautos.');
     }
 
     public function show($id)
     {
-        $item = PirkimoPreke::with(['pirkimas', 'skelbimas'])->find($id);
-        if (!$item) return $this->sendError('Pirkimo prekė nerasta', 404);
+        $preke = PirkimoPreke::with(['pirkimas', 'skelbimas'])->find($id);
+        if (!$preke) return $this->sendError('Pirkimo prekė nerasta', 404);
 
-        return $this->sendResponse(new PirkimoPrekeResource($item), 'Pirkimo prekė rasta.');
+        return $this->sendResponse(new PirkimoPrekeResource($preke), 'Pirkimo prekė rasta.');
     }
 
-    public function store(Request $request)
+    public function store(StorePirkimoPrekeRequest $request)
     {
-        $data = $request->validate([
-            'pirkimas_id' => 'required|exists:pirkimai,id',
-            'skelbimas_id' => 'required|exists:skelbimai,id',
-            'kaina' => 'required|numeric|min:0',
-            'kiekis' => 'required|integer|min:1'
-        ]);
-
-        $item = PirkimoPreke::create($data);
-        return $this->sendResponse(new PirkimoPrekeResource($item), 'Pirkimo prekė pridėta.', 201);
+        $preke = PirkimoPreke::create($request->validated());
+        return $this->sendResponse(new PirkimoPrekeResource($preke), 'Pirkimo prekė pridėta.', 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdatePirkimoPrekeRequest $request, $id)
     {
-        $item = PirkimoPreke::find($id);
-        if (!$item) return $this->sendError('Pirkimo prekė nerasta', 404);
+        $preke = PirkimoPreke::find($id);
+        if (!$preke) return $this->sendError('Pirkimo prekė nerasta', 404);
 
-        $item->update($request->validate([
-            'kaina' => 'sometimes|numeric|min:0',
-            'kiekis' => 'sometimes|integer|min:1'
-        ]));
-
-        return $this->sendResponse(new PirkimoPrekeResource($item), 'Pirkimo prekė atnaujinta.');
+        $preke->update($request->validated());
+        return $this->sendResponse(new PirkimoPrekeResource($preke), 'Pirkimo prekė atnaujinta.');
     }
 
     public function destroy($id)
     {
-        $item = PirkimoPreke::find($id);
-        if (!$item) return $this->sendError('Pirkimo prekė nerasta', 404);
+        $preke = PirkimoPreke::find($id);
+        if (!$preke) return $this->sendError('Pirkimo prekė nerasta', 404);
 
-        $item->delete();
+        $preke->delete();
         return $this->sendResponse(null, 'Pirkimo prekė ištrinta.');
     }
 }

@@ -3,59 +3,50 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Atsiliepimas;
-use Illuminate\Http\Request;
 use App\Http\Resources\AtsiliepimasResource;
+use App\Http\Requests\StoreAtsiliepimasRequest;
+use App\Http\Requests\UpdateAtsiliepimasRequest;
 
 class AtsiliepimasController extends BaseController
 {
     public function index()
     {
+        $atsiliepimai = Atsiliepimas::with(['user', 'skelbimas'])->get();
         return $this->sendResponse(
-            AtsiliepimasResource::collection(Atsiliepimas::with(['user', 'skelbimas'])->get()),
-            'Atsiliepimai sėkmingai gauti.'
+            AtsiliepimasResource::collection($atsiliepimai),
+            'Atsiliepimai gauti.'
         );
     }
 
     public function show($id)
     {
-        $ats = Atsiliepimas::with(['user', 'skelbimas'])->find($id);
-        if (!$ats) return $this->sendError('Atsiliepimas nerastas', 404);
+        $atsiliepimas = Atsiliepimas::with(['user', 'skelbimas'])->find($id);
+        if (!$atsiliepimas) return $this->sendError('Atsiliepimas nerastas', 404);
 
-        return $this->sendResponse(new AtsiliepimasResource($ats), 'Atsiliepimas rastas.');
+        return $this->sendResponse(new AtsiliepimasResource($atsiliepimas), 'Atsiliepimas rastas.');
     }
 
-    public function store(Request $request)
+    public function store(StoreAtsiliepimasRequest $request)
     {
-        $data = $request->validate([
-            'ivertinimas' => 'required|integer|min:1|max:5',
-            'komentaras' => 'nullable|string',
-            'skelbimas_id' => 'required|exists:skelbimai,id',
-            'user_id' => 'required|exists:users,id'
-        ]);
-
-        $ats = Atsiliepimas::create($data);
-        return $this->sendResponse(new AtsiliepimasResource($ats), 'Atsiliepimas sukurtas.', 201);
+        $atsiliepimas = Atsiliepimas::create($request->validated());
+        return $this->sendResponse(new AtsiliepimasResource($atsiliepimas), 'Atsiliepimas sukurtas.', 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateAtsiliepimasRequest $request, $id)
     {
-        $ats = Atsiliepimas::find($id);
-        if (!$ats) return $this->sendError('Atsiliepimas nerastas', 404);
+        $atsiliepimas = Atsiliepimas::find($id);
+        if (!$atsiliepimas) return $this->sendError('Atsiliepimas nerastas', 404);
 
-        $ats->update($request->validate([
-            'ivertinimas' => 'sometimes|integer|min:1|max:5',
-            'komentaras' => 'nullable|string'
-        ]));
-
-        return $this->sendResponse(new AtsiliepimasResource($ats), 'Atsiliepimas atnaujintas.');
+        $atsiliepimas->update($request->validated());
+        return $this->sendResponse(new AtsiliepimasResource($atsiliepimas), 'Atsiliepimas atnaujintas.');
     }
 
     public function destroy($id)
     {
-        $ats = Atsiliepimas::find($id);
-        if (!$ats) return $this->sendError('Atsiliepimas nerastas', 404);
+        $atsiliepimas = Atsiliepimas::find($id);
+        if (!$atsiliepimas) return $this->sendError('Atsiliepimas nerastas', 404);
 
-        $ats->delete();
+        $atsiliepimas->delete();
         return $this->sendResponse(null, 'Atsiliepimas ištrintas.');
     }
 }

@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Kategorija;
-use Illuminate\Http\Request;
 use App\Http\Resources\KategorijaResource;
+use App\Http\Requests\StoreKategorijaRequest;
+use App\Http\Requests\UpdateKategorijaRequest;
 
 class KategorijaController extends BaseController
 {
@@ -18,44 +19,33 @@ class KategorijaController extends BaseController
 
     public function show($id)
     {
-        $kat = Kategorija::find($id);
-        if (!$kat) return $this->sendError('Kategorija nerasta', 404);
+        $kategorija = Kategorija::find($id);
+        if (!$kategorija) return $this->sendError('Kategorija nerasta', 404);
 
-        return $this->sendResponse(new KategorijaResource($kat), 'Kategorija rasta.');
+        return $this->sendResponse(new KategorijaResource($kategorija), 'Kategorija rasta.');
     }
 
-    public function store(Request $request)
+    public function store(StoreKategorijaRequest $request)
     {
-        $data = $request->validate([
-            'pavadinimas' => 'required|string|max:100',
-            'aprasymas' => 'nullable|string|max:255',
-            'tipo_zenklas' => 'required|string|in:preke,paslauga'
-        ]);
-
-        $kat = Kategorija::create($data);
-        return $this->sendResponse(new KategorijaResource($kat), 'Kategorija sukurta sėkmingai.', 201);
+        $kategorija = Kategorija::create($request->validated());
+        return $this->sendResponse(new KategorijaResource($kategorija), 'Kategorija sukurta sėkmingai.', 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateKategorijaRequest $request, $id)
     {
-        $kat = Kategorija::find($id);
-        if (!$kat) return $this->sendError('Kategorija nerasta', 404);
+        $kategorija = Kategorija::find($id);
+        if (!$kategorija) return $this->sendError('Kategorija nerasta', 404);
 
-        $kat->update($request->validate([
-            'pavadinimas' => 'required|string|max:100',
-            'aprasymas' => 'nullable|string|max:255',
-            'tipo_zenklas' => 'required|string|in:preke,paslauga'
-        ]));
-
-        return $this->sendResponse(new KategorijaResource($kat), 'Kategorija atnaujinta.');
+        $kategorija->update($request->validated());
+        return $this->sendResponse(new KategorijaResource($kategorija), 'Kategorija atnaujinta.');
     }
 
     public function destroy($id)
     {
-        $kat = Kategorija::find($id);
-        if (!$kat) return $this->sendError('Kategorija nerasta', 404);
+        $kategorija = Kategorija::find($id);
+        if (!$kategorija) return $this->sendError('Kategorija nerasta', 404);
 
-        $kat->delete();
+        $kategorija->delete();
         return $this->sendResponse(null, 'Kategorija ištrinta.');
     }
 }

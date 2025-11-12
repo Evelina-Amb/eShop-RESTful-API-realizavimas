@@ -2,46 +2,39 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Miestas;
 use App\Http\Resources\MiestasResource;
+use App\Http\Requests\StoreMiestasRequest;
+use App\Http\Requests\UpdateMiestasRequest;
 
 class MiestasController extends BaseController
 {
     public function index()
     {
-        return $this->sendResponse(
-            MiestasResource::collection(Miestas::with('salis')->get()),
-            'Miestai sėkmingai gauti.'
-        );
+        $miestai = Miestas::with('salis')->get();
+        return $this->sendResponse(MiestasResource::collection($miestai), 'Miestai gauti.');
     }
 
     public function show($id)
     {
         $miestas = Miestas::with('salis')->find($id);
         if (!$miestas) return $this->sendError('Miestas nerastas', 404);
+
         return $this->sendResponse(new MiestasResource($miestas), 'Miestas rastas.');
     }
 
-    public function store(Request $request)
+    public function store(StoreMiestasRequest $request)
     {
-        $data = $request->validate([
-            'pavadinimas' => 'required|string|max:100',
-            'salis_id' => 'required|exists:salis,id'
-        ]);
-        $miestas = Miestas::create($data);
+        $miestas = Miestas::create($request->validated());
         return $this->sendResponse(new MiestasResource($miestas), 'Miestas sukurtas.', 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateMiestasRequest $request, $id)
     {
         $miestas = Miestas::find($id);
         if (!$miestas) return $this->sendError('Miestas nerastas', 404);
-        $miestas->update($request->validate([
-            'pavadinimas' => 'required|string|max:100',
-            'salis_id' => 'required|exists:salis,id'
-        ]));
+
+        $miestas->update($request->validated());
         return $this->sendResponse(new MiestasResource($miestas), 'Miestas atnaujintas.');
     }
 
@@ -49,6 +42,7 @@ class MiestasController extends BaseController
     {
         $miestas = Miestas::find($id);
         if (!$miestas) return $this->sendError('Miestas nerastas', 404);
+
         $miestas->delete();
         return $this->sendResponse(null, 'Miestas ištrintas.');
     }

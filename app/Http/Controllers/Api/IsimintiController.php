@@ -3,44 +3,47 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Isiminti;
-use Illuminate\Http\Request;
 use App\Http\Resources\IsimintiResource;
+use App\Http\Requests\StoreIsimintiRequest;
+use App\Http\Requests\UpdateIsimintiRequest;
 
 class IsimintiController extends BaseController
 {
     public function index()
     {
-        return $this->sendResponse(
-            IsimintiResource::collection(Isiminti::with(['user', 'skelbimas'])->get()),
-            'Įsiminti skelbimai gauti.'
-        );
+        $isiminti = Isiminti::with(['user', 'skelbimas'])->get();
+        return $this->sendResponse(IsimintiResource::collection($isiminti), 'Įsiminti skelbimai gauti.');
     }
 
     public function show($id)
     {
-        $item = Isiminti::with(['user', 'skelbimas'])->find($id);
-        if (!$item) return $this->sendError('Įsimintas įrašas nerastas', 404);
+        $isimintas = Isiminti::with(['user', 'skelbimas'])->find($id);
+        if (!$isimintas) return $this->sendError('Įsimintas skelbimas nerastas', 404);
 
-        return $this->sendResponse(new IsimintiResource($item), 'Įsimintas įrašas rastas.');
+        return $this->sendResponse(new IsimintiResource($isimintas), 'Įsimintas skelbimas rastas.');
     }
 
-    public function store(Request $request)
+    public function store(StoreIsimintiRequest $request)
     {
-        $data = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'skelbimas_id' => 'required|exists:skelbimai,id'
-        ]);
+        $isimintas = Isiminti::create($request->validated());
+        return $this->sendResponse(new IsimintiResource($isimintas), 'Skelbimas įsimintas.', 201);
+    }
 
-        $item = Isiminti::create($data);
-        return $this->sendResponse(new IsimintiResource($item), 'Skelbimas įsimintas.', 201);
+    public function update(UpdateIsimintiRequest $request, $id)
+    {
+        $isimintas = Isiminti::find($id);
+        if (!$isimintas) return $this->sendError('Įsimintas skelbimas nerastas', 404);
+
+        $isimintas->update($request->validated());
+        return $this->sendResponse(new IsimintiResource($isimintas), 'Įsimintas skelbimas atnaujintas.');
     }
 
     public function destroy($id)
     {
-        $item = Isiminti::find($id);
-        if (!$item) return $this->sendError('Įsimintas įrašas nerastas', 404);
+        $isimintas = Isiminti::find($id);
+        if (!$isimintas) return $this->sendError('Įsimintas skelbimas nerastas', 404);
 
-        $item->delete();
+        $isimintas->delete();
         return $this->sendResponse(null, 'Skelbimas pašalintas iš įsimintų.');
     }
 }

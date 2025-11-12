@@ -3,17 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Krepselis;
-use Illuminate\Http\Request;
 use App\Http\Resources\KrepselisResource;
+use App\Http\Requests\StoreKrepselisRequest;
+use App\Http\Requests\UpdateKrepselisRequest;
 
 class KrepselisController extends BaseController
 {
     public function index()
     {
-        return $this->sendResponse(
-            KrepselisResource::collection(Krepselis::with(['user', 'skelbimas'])->get()),
-            'Krepšelio turinys sėkmingai gautas.'
-        );
+        $krepselis = Krepselis::with(['user', 'skelbimas'])->get();
+        return $this->sendResponse(KrepselisResource::collection($krepselis), 'Krepšelis gautas.');
     }
 
     public function show($id)
@@ -24,24 +23,18 @@ class KrepselisController extends BaseController
         return $this->sendResponse(new KrepselisResource($item), 'Krepšelio įrašas rastas.');
     }
 
-    public function store(Request $request)
+    public function store(StoreKrepselisRequest $request)
     {
-        $data = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'skelbimas_id' => 'required|exists:skelbimai,id',
-            'kiekis' => 'required|integer|min:1'
-        ]);
-
-        $item = Krepselis::create($data);
-        return $this->sendResponse(new KrepselisResource($item), 'Pridėta į krepšelį.', 201);
+        $item = Krepselis::create($request->validated());
+        return $this->sendResponse(new KrepselisResource($item), 'Prekė pridėta į krepšelį.', 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateKrepselisRequest $request, $id)
     {
         $item = Krepselis::find($id);
         if (!$item) return $this->sendError('Krepšelio įrašas nerastas', 404);
 
-        $item->update($request->validate(['kiekis' => 'required|integer|min:1']));
+        $item->update($request->validated());
         return $this->sendResponse(new KrepselisResource($item), 'Krepšelio įrašas atnaujintas.');
     }
 
