@@ -2,29 +2,67 @@
 
 namespace App\Exceptions;
 
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 
 class Handler extends ExceptionHandler
 {
-    /**
-     * The list of the inputs that are never flashed to the session on validation exceptions.
-     *
-     * @var array<int, string>
-     */
-    protected $dontFlash = [
-        'current_password',
-        'password',
-        'password_confirmation',
-    ];
-
-    /**
-     * Register the exception handling callbacks for the application.
-     */
-    public function register(): void
+    public function render($request, Throwable $exception)
     {
-        $this->reportable(function (Throwable $e) {
-            //
-        });
+        // All API responses are JSON
+        if ($request->expectsJson()) {
+
+            // 404 – Resource not found
+            if ($exception instanceof ModelNotFoundException || $exception instanceof NotFoundHttpException) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Resource not found',
+                    'code' => 404
+                ], 404);
+            }
+
+            // 401 – Unauthorized (not logged in)
+            if ($exception instanceof AuthenticationException) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthorized',
+                    'code' => 401
+                ], 401);
+            }
+
+            // 422 – Validation errors
+            if ($exception instanceof ValidationException) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $exception->errors(),
+                    'code' => 422
+                ], 422);
+            }
+
+            // 403 – Forbidden (no permission)
+            if (method_exists($exception, 'getStatusCode') && $exception->getStatusCode() === 403) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Forbidden',
+                    'code' => 403
+                ], 403);
+            }
+
+            // 500 – Internal server error (default)
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Server error',
+                'code' => 500
+            ], 500);
+        }
+
+        // Default Laravel HTML response (non-API)
+        return parent::render($request, $exception);
     }
 }
