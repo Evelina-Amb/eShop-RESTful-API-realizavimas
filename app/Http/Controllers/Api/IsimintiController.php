@@ -5,12 +5,19 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Isiminti;
+use App\Http\Resources\IsimintiResource;
 
 class IsimintiController extends Controller
 {
-    public function index() { return Isiminti::with(['user', 'skelbimas'])->get(); }
+    public function index()
+    {
+        return IsimintiResource::collection(Isiminti::with(['user', 'skelbimas'])->get());
+    }
 
-    public function show($id) { return Isiminti::with(['user', 'skelbimas'])->findOrFail($id); }
+    public function show($id)
+    {
+        return new IsimintiResource(Isiminti::with(['user', 'skelbimas'])->findOrFail($id));
+    }
 
     public function store(Request $request)
     {
@@ -18,8 +25,7 @@ class IsimintiController extends Controller
             'user_id' => 'required|exists:users,id',
             'skelbimas_id' => 'required|exists:skelbimai,id'
         ]);
-        $fav = Isiminti::create($data);
-        return response()->json($fav, 201);
+        return new IsimintiResource(Isiminti::create($data));
     }
 
     public function destroy($id)

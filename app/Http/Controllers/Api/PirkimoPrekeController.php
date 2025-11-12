@@ -5,12 +5,23 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\PirkimoPreke;
+use App\Http\Resources\PirkimoPrekeResource;
 
 class PirkimoPrekeController extends Controller
 {
-    public function index() { return PirkimoPreke::with(['pirkimas', 'skelbimas'])->get(); }
+    public function index()
+    {
+        return PirkimoPrekeResource::collection(
+            PirkimoPreke::with(['pirkimas', 'skelbimas'])->get()
+        );
+    }
 
-    public function show($id) { return PirkimoPreke::with(['pirkimas', 'skelbimas'])->findOrFail($id); }
+    public function show($id)
+    {
+        return new PirkimoPrekeResource(
+            PirkimoPreke::with(['pirkimas', 'skelbimas'])->findOrFail($id)
+        );
+    }
 
     public function store(Request $request)
     {
@@ -20,8 +31,7 @@ class PirkimoPrekeController extends Controller
             'kaina' => 'required|numeric|min:0',
             'kiekis' => 'required|integer|min:1'
         ]);
-        $preke = PirkimoPreke::create($data);
-        return response()->json($preke, 201);
+        return new PirkimoPrekeResource(PirkimoPreke::create($data));
     }
 
     public function update(Request $request, $id)
@@ -31,7 +41,7 @@ class PirkimoPrekeController extends Controller
             'kaina' => 'sometimes|numeric|min:0',
             'kiekis' => 'sometimes|integer|min:1'
         ]));
-        return $preke;
+        return new PirkimoPrekeResource($preke);
     }
 
     public function destroy($id)

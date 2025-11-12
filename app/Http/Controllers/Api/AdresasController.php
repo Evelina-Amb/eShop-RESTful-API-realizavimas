@@ -5,12 +5,19 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Adresas;
+use App\Http\Resources\AdresasResource;
 
 class AdresasController extends Controller
 {
-    public function index() { return Adresas::with('miestas')->get(); }
+    public function index()
+    {
+        return AdresasResource::collection(Adresas::with('miestas')->get());
+    }
 
-    public function show($id) { return Adresas::with('miestas')->findOrFail($id); }
+    public function show($id)
+    {
+        return new AdresasResource(Adresas::with('miestas')->findOrFail($id));
+    }
 
     public function store(Request $request)
     {
@@ -20,8 +27,7 @@ class AdresasController extends Controller
             'buto_nr' => 'nullable|string|max:10',
             'miestas_id' => 'required|exists:miestas,id'
         ]);
-        $adresas = Adresas::create($data);
-        return response()->json($adresas, 201);
+        return new AdresasResource(Adresas::create($data));
     }
 
     public function update(Request $request, $id)
@@ -33,7 +39,7 @@ class AdresasController extends Controller
             'buto_nr' => 'nullable|string|max:10',
             'miestas_id' => 'required|exists:miestas,id'
         ]));
-        return $adresas;
+        return new AdresasResource($adresas);
     }
 
     public function destroy($id)

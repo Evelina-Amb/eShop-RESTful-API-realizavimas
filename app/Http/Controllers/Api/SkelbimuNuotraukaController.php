@@ -5,12 +5,23 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SkelbimuNuotrauka;
+use App\Http\Resources\SkelbimuNuotraukaResource;
 
 class SkelbimuNuotraukaController extends Controller
 {
-    public function index() { return SkelbimuNuotrauka::with('skelbimas')->get(); }
+    public function index()
+    {
+        return SkelbimuNuotraukaResource::collection(
+            SkelbimuNuotrauka::with('skelbimas')->get()
+        );
+    }
 
-    public function show($id) { return SkelbimuNuotrauka::with('skelbimas')->findOrFail($id); }
+    public function show($id)
+    {
+        return new SkelbimuNuotraukaResource(
+            SkelbimuNuotrauka::with('skelbimas')->findOrFail($id)
+        );
+    }
 
     public function store(Request $request)
     {
@@ -18,17 +29,14 @@ class SkelbimuNuotraukaController extends Controller
             'skelbimas_id' => 'required|exists:skelbimai,id',
             'failo_url' => 'required|string|max:255'
         ]);
-        $photo = SkelbimuNuotrauka::create($data);
-        return response()->json($photo, 201);
+        return new SkelbimuNuotraukaResource(SkelbimuNuotrauka::create($data));
     }
 
     public function update(Request $request, $id)
     {
         $photo = SkelbimuNuotrauka::findOrFail($id);
-        $photo->update($request->validate([
-            'failo_url' => 'required|string|max:255'
-        ]));
-        return $photo;
+        $photo->update($request->validate(['failo_url' => 'required|string|max:255']));
+        return new SkelbimuNuotraukaResource($photo);
     }
 
     public function destroy($id)

@@ -5,12 +5,19 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Pirkimas;
+use App\Http\Resources\PirkimasResource;
 
 class PirkimasController extends Controller
 {
-    public function index() { return Pirkimas::with('user')->get(); }
+    public function index()
+    {
+        return PirkimasResource::collection(Pirkimas::with(['user', 'prekes'])->get());
+    }
 
-    public function show($id) { return Pirkimas::with(['user', 'prekes'])->findOrFail($id); }
+    public function show($id)
+    {
+        return new PirkimasResource(Pirkimas::with(['user', 'prekes'])->findOrFail($id));
+    }
 
     public function store(Request $request)
     {
@@ -19,9 +26,7 @@ class PirkimasController extends Controller
             'bendra_suma' => 'required|numeric|min:0',
             'statusas' => 'required|string|in:completed,canceled,refunded'
         ]);
-        $data['pirkimo_data'] = now();
-        $pirkimas = \App\Models\Pirkimas::create($data);
-        return response()->json($pirkimas, 201);
+        return new PirkimasResource(Pirkimas::create($data));
     }
 
     public function update(Request $request, $id)
@@ -30,7 +35,7 @@ class PirkimasController extends Controller
         $pirkimas->update($request->validate([
             'statusas' => 'required|string|in:completed,canceled,refunded'
         ]));
-        return $pirkimas;
+        return new PirkimasResource($pirkimas);
     }
 
     public function destroy($id)

@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Miestas;
+use App\Http\Resources\MiestasResource;
 
 class MiestasController extends Controller
 {
-    public function index() { return Miestas::with('salis')->get(); }
+    public function index() {  return MiestasResource::collection(Miestas::with('salis')->get());}
 
-    public function show($id) { return Miestas::with('salis')->findOrFail($id); }
+    public function show($id) { return new MiestasResource(Miestas::with('salis')->findOrFail($id)); }
 
     public function store(Request $request)
     {
@@ -18,8 +19,7 @@ class MiestasController extends Controller
             'pavadinimas' => 'required|string|max:100',
             'salis_id' => 'required|exists:salis,id'
         ]);
-        $miestas = Miestas::create($data);
-        return response()->json($miestas, 201);
+       return new MiestasResource(Miestas::create($data));
     }
 
     public function update(Request $request, $id)
@@ -29,7 +29,7 @@ class MiestasController extends Controller
             'pavadinimas' => 'required|string|max:100',
             'salis_id' => 'required|exists:salis,id'
         ]));
-        return $miestas;
+        return new MiestasResource($miestas);
     }
 
     public function destroy($id)
